@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="menu" id="menu">
+    <h1 class="menu-title">UNO</h1>
+    <div class="nick-display">
+      <span id="nickText">Ник: не указан</span>
+    </div>
+    <div class="nick-input">
+      <input type="text" id="nickInput" placeholder="Введите ваш ник" maxlength="15">
+      <button class="save-btn" id="saveNickBtn">OK</button>
+    </div>
+    <div class="menu-buttons">
+      <button class="menu-btn" id="onlineBtn">Игра онлайн</button>
+      <button class="menu-btn" id="botsBtn">Игра с ботами</button>
+    </div>
+    <button class="menu-btn" id="exitBtn" style="margin-top: 20px;">Выход</button>
+  </div>
+
+  <div class="menu" id="botsMenu" style="display:none;">
+    <h2 class="bots-title">Выберите количество ботов</h2>
+    <div class="bots-selection">
+      <button class="bot-option-btn" id="oneBotBtn">1 бот</button>
+      <button class="bot-option-btn" id="twoBotsBtn">2 бота</button>
+    </div>
+    <div class="nick-display">
+      <span id="botsMenuNickText">Ник: не указан</span>
+    </div>
+    <button class="back-btn" id="backToMainMenuBtn">← Назад</button>
+  </div>
+
+  <div class="game" id="game" style="display:none;">
+    <div class="game-container">
+      <div class="game-nick-display">
+        <span id="gameNickText">Ник: не указан</span>
+      </div>
+      <!-- Кнопки Ходы и Выгод внутри game-container -->
+      <div class="game-buttons">
+        <div class="moves-btn" id="movesBtn">Ходы</div>
+        <div class="exit-game-btn" id="exitGameBtn">Выход</div>
+      </div>
+      <div class="turn-indicator" id="turnIndicator"></div>
+      <div class="center-decks">
+        <div class="deck">
+          <h3>Сброс</h3>
+          <div class="card-slot" id="discardPile"></div>
+        </div>
+        <div class="deck">
+          <h3>Колода</h3>
+          <div class="card-slot draw-pile" id="drawPile"></div>
+          <button id="drawBtn">Взять карту</button>
+        </div>
+      </div>
+      <div class="hand" id="hand"></div>
+    </div>
+  </div>
+
+  <div class="winner-popup" id="winnerPopup">
+    <div class="winner-content">
+      <h2 class="winner-title">🏆 Победитель!</h2>
+      <p class="winner-name" id="winnerName"></p>
+      <div class="winner-buttons">
+        <button class="winner-btn" id="newGamePopupBtn">Новая игра</button>
+        <button class="winner-btn" id="menuPopupBtn">В меню</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="moves-window" id="movesWindow">
+    <div class="moves-header">
+      <span>📜 Ходы</span>
+      <span class="moves-close" id="movesClose">×</span>
+    </div>
+    <div class="moves-content" id="movesContent"></div>
+  </div>
+
+  <div class="color-picker-section" id="colorPickerSection">
+    <h3>Выберите цвет:</h3>
+    <div class="colors" id="colorPicker"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

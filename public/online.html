@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO - Онлайн</title>
+  <link rel="stylesheet" href="online.css">
+</head>
+<body>
+  <div class="menu" id="menu">
+    <h1 class="menu-title">UNO</h1>
+    <div class="nick-display">
+      <span id="nickText">Ник: не указан</span>
+    </div>
+    <div class="nick-input">
+      <input type="text" id="nickInput" placeholder="Введите ваш ник" maxlength="15">
+      <button class="save-btn" id="saveNickBtn">OK</button>
+    </div>
+    <div class="menu-buttons">
+      <div class="menu-buttons-top">
+        <button class="menu-btn" id="createRoomBtn">Создать комнату</button>
+        <button class="menu-btn" id="joinRoomBtn">Вступить в комнату</button>
+      </div>
+      <button class="menu-btn back-btn-centered" id="backToMainBtn">← Назад</button>
+    </div>
+  </div>
+
+
+  <div class="menu" id="roomMenu" style="display:none;">
+    <h2 class="bots-title">Комната</h2>
+    <div class="nick-display">
+      <span id="roomNickText">Ник: не указан</span>
+    </div>
+    <div class="room-code" id="roomCodeDisplay"></div>
+    <div id="waitingText" class="waiting-text">Ожидание второго игрока...</div>
+    <div class="room-slots">
+      <div class="slot" id="slot1">
+        <div class="slot-avatar" id="slot1Avatar">+</div>
+        <div class="slot-name" id="slot1Name">Свободно</div>
+      </div>
+      <div class="slot" id="slot2">
+        <div class="slot-avatar" id="slot2Avatar">+</div>
+        <div class="slot-name" id="slot2Name">Свободно</div>
+      </div>
+    </div>
+    <button class="menu-btn" id="copyCodeBtn">Копировать код</button>
+    <button class="menu-btn" id="leaveRoomBtn" style="background: linear-gradient(135deg, #666, #444);">Покинуть комнату</button>
+  </div>
+
+
+  <div class="menu" id="joinRoomMenu" style="display:none;">
+    <h2 class="bots-title">Вступить в комнату</h2>
+    <div class="nick-display">
+      <span id="joinNickText">Ник: не указан</span>
+    </div>
+    <div class="nick-input">
+      <input type="text" id="roomCodeInput" placeholder="Введите код комнаты" maxlength="6">
+      <button class="save-btn" id="joinCodeBtn">Войти</button>
+    </div>
+    <button class="back-btn join-back-btn" id="backToMenuFromJoin">← Назад</button>
+  </div>
+
+
+  <div class="game" id="game" style="display:none;">
+    <div class="game-container">
+      <div class="game-nick-display">
+        <span id="gameNickText">Ник: не указан</span>
+      </div>
+
+
+      <div class="player-table" id="player1Table">
+        <div class="player-card-slot"></div>
+        <div class="player-name" id="player1Name">Игрок 1</div>
+        <div class="player-cards-count" id="player1Count">7 карт</div>
+      </div>
+
+
+      <div class="player-table" id="player2Table">
+        <div class="player-card-slot"></div>
+        <div class="player-name" id="player2Name">Игрок 2</div>
+        <div class="player-cards-count" id="player2Count">7 карт</div>
+      </div>
+
+
+      <div class="center-decks">
+        <div class="deck">
+          <h3>Сброс</h3>
+          <div class="card-slot" id="discardPile"></div>
+        </div>
+        <div class="deck">
+          <h3>Колода</h3>
+          <div class="card-slot draw-pile" id="drawPile"></div>
+          <button id="drawBtn">Взять карту</button>
+        </div>
+      </div>
+
+
+      <div class="turn-indicator" id="turnIndicator"></div>
+
+
+      <div class="hand" id="hand"></div>
+
+
+      <div class="color-picker-section" id="colorPickerSection">
+        <h3>Выберите цвет:</h3>
+        <div class="colors" id="colorPicker">
+          <button class="color red" data-color="red">RED</button>
+          <button class="color yellow" data-color="yellow">YELLOW</button>
+          <button class="color green" data-color="green">GREEN</button>
+          <button class="color blue" data-color="blue">BLUE</button>
+        </div>
+      </div>
+
+
+      <div class="moves-btn" id="movesBtn">Ходы</div>
+      <div class="exit-game-btn" id="exitGameBtn">Выход</div>
+
+
+      <div class="moves-window" id="movesWindow">
+        <div class="moves-header">
+          <span>📜 Ходы</span>
+          <span class="moves-close" id="movesClose">×</span>
+        </div>
+        <div class="moves-content" id="movesContent"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="winner-popup" id="winnerPopup">
+    <div class="winner-content">
+      <h2 class="winner-title">🏆 Победитель!</h2>
+      <p class="winner-name" id="winnerName"></p>
+      <div class="winner-buttons">
+        <button class="winner-btn" id="newGamePopupBtn">Новая игра</button>
+        <button class="winner-btn" id="menuPopupBtn">В меню</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="online.js"></script>
+</body>
+</html>

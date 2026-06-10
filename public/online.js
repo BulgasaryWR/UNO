@@ -29,6 +29,7 @@ const socket = io('http://192.168.1.3:3000');
 
 console.log('online.js loaded!');
 
+
 const menu = document.getElementById('menu');
 const roomMenu = document.getElementById('roomMenu');
 const joinRoomMenu = document.getElementById('joinRoomMenu');
@@ -544,3 +545,8 @@ drawBtn.onclick = () => {
   if (!currentPlayerTurn || gameOver) return;
   socket.emit('drawCard');
 };
+
+
+
+
+

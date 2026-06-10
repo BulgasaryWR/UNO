@@ -462,7 +462,6 @@ io.on('connection', (socket) => {
 });
 
 
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(publicPath, 'online.html'));
 });
@@ -471,5 +470,5 @@ app.get('/', (req, res) => {
 
 const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`UNO running at http://192.168.1.3:${PORT}`);
+  console.log(`UNO running at http://192.168.1.3:3000`);
 });

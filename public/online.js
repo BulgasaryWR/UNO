@@ -73,30 +73,23 @@ const player1CountEl = document.getElementById('player1Count');
 const player2NameEl = document.getElementById('player2Name');
 const player2CountEl = document.getElementById('player2Count');
 
-let isMovesWindowOpen = false;
-
+// Добавь обработчики для кнопок цвета
 colorPicker.addEventListener('click', (e) => {
   if (e.target.classList.contains('color') && waitingForWildColor) {
     const selectedColor = e.target.dataset.color;
     waitingForWildColor = false;
-    
-    if (waitingForWildCardIdx >= 0) {
-      myHand[waitingForWildCardIdx].selectedColor = selectedColor;
-    }
-    
     colorPickerSection.style.display = 'none';
     
     console.log('Wild color selected:', selectedColor);
     currentColor = selectedColor;
     
+    // Отправляем карту с новым цветом
     if (waitingForWildCardIdx >= 0) {
       const card = myHand[waitingForWildCardIdx];
       console.log('Sending wild card with color:', selectedColor, card);
-      socket.emit('playCard', { cardIndex: waitingForWildCardIdx, selectedColor });
+      socket.emit('playCard', { cardIndex: waitingForWildCardIdx });
       waitingForWildCardIdx = -1;
     }
-    
-    updateUI();
   }
 });
 
@@ -199,7 +192,9 @@ joinCodeBtn.onclick = () => {
 
 backToMainBtn.onclick = () => {
   socket.emit('leaveRoom');
-  window.location.href = 'index.html';
+  roomMenu.style.display = 'none';
+  joinRoomMenu.style.display = 'none';
+  menu.style.display = 'flex';
 };
 
 leaveRoomBtn.onclick = () => {
@@ -215,11 +210,49 @@ backToMenuFromJoin.onclick = () => {
   menu.style.display = 'flex';
 };
 
-copyCodeBtn.onclick = async () => {
-  if (!gameId) return;
-  await navigator.clipboard.writeText(gameId);
-  alert(`Код: ${gameId}\nОТКРОЙ ДРУГУЮ ВКЛАДКУ И ВВЕДИ КОД!`);
+copyCodeBtn.onclick = () => {
+  if (!gameId) {
+    alert('Нет кода комнаты!');
+    return;
+  }
+  
+  // Метод 1: navigator.clipboard (новый)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(gameId).then(() => {
+      alert(`✅ Код скопcppирован: ${gameId}\nОТКРОЙ ДРУГУЮ ВКЛАДКУ И ВВЕДИ КОД!`);
+    }).catch((err) => {
+      console.error('Clipboard error:', err);
+      // Метод 2: execCommand (старый, работает везде)
+      copyWithExecCommand(gameId);
+    });
+  } else {
+    // Метод 2: execCommand (работает в старых браузерах)
+    copyWithExecCommand(gameId);
+  }
 };
+
+function copyWithExecCommand(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    if (successful) {
+      alert(`✅ Код скопирован: ${text}\nОТКРОЙ ДРУГУЮ ВКЛАДКУ И ВВЕДИ КОД!`);
+    } else {
+      alert(`❌ Не удалось скопировать. Вручную введите код: ${text}`);
+    }
+  } catch (err) {
+    document.body.removeChild(textarea);
+    console.error('execCommand error:', err);
+    alert(`❌ Не удалось скопировать. Вручную введите код: ${text}`);
+  }
+}
 
 exitGameBtn.onclick = () => {
   socket.emit('leaveRoom');
@@ -229,6 +262,15 @@ exitGameBtn.onclick = () => {
   menu.style.display = 'flex';
 };
 
+if (newGamePopupBtn) {
+  newGamePopupBtn.onclick = () => { 
+    winnerPopup.style.display = 'none'; 
+    socket.emit('leaveRoom');
+    game.style.display = 'none';
+    menu.style.display = 'flex';
+  };
+}
+
 menuPopupBtn.onclick = () => {
   socket.emit('leaveRoom');
   winnerPopup.style.display = 'none';
@@ -236,90 +278,8 @@ menuPopupBtn.onclick = () => {
   menu.style.display = 'flex';
 };
 
-movesBtn.onclick = () => {
-  movesWindow.style.display = 'block';
-  isMovesWindowOpen = true;
-  updateMovesLog();
-};
-movesClose.onclick = () => {
-  movesWindow.style.display = 'none';
-  isMovesWindowOpen = false;
-};
-
-function getColorHex(color) {
-  if (color === 'red') return '#d32f2f';
-  if (color === 'yellow') return '#fbc02d';
-  if (color === 'green') return '#388e3c';
-  if (color === 'blue') return '#1976d2';
-  return '#fff';
-}
-
-function updateMovesLog() {
-  console.log('updateMovesLog called, movesLog length:', movesLog.length);
-  movesContent.innerHTML = '';
-  
-  if (movesLog.length === 0) {
-    movesContent.innerHTML = '<div style="color:#ccc;padding:10px;">Нет ходов</div>';
-    return;
-  }
-  
-  movesLog.forEach((move, idx) => {
-    const div = document.createElement('div');
-    div.className = 'move-item';
-    
-    // Если игрок взял карту
-    if (move.card === 'draw') {
-      div.innerHTML = `<span style="color:#888;">${move.player} --> взял карту</span>`;
-      movesContent.appendChild(div);
-      return;
-    }
-    
-    // Если игрок пропустил ход
-    if (move.card === 'skip') {
-      div.innerHTML = `<span style="color:#e94560;font-weight:bold;">${move.player} --> пропустил ход</span>`;
-      movesContent.appendChild(div);
-      return;
-    }
-    
-    let cardText = move.card;
-    if (move.card === 'wild') {
-      cardText = 'W';
-    } else if (move.card === 'wild4') {
-      cardText = '+4';
-    } else if (move.card === 'reverse') {
-      cardText = '⇄';
-    } else if (move.card === 'draw2') {
-      cardText = '+2';
-    }
-    
-    let colorText = move.color;
-    if (colorText === 'red') colorText = 'красный';
-    if (colorText === 'yellow') colorText = 'желтый';
-    if (colorText === 'green') colorText = 'зеленый';
-    if (colorText === 'blue') colorText = 'синий';
-    
-    let colorForSpan = move.color;
-    
-    if (move.selectedColor) {
-      let selectedColorText = move.selectedColor;
-      if (selectedColorText === 'red') selectedColorText = 'красный';
-      if (selectedColorText === 'yellow') selectedColorText = 'желтый';
-      if (selectedColorText === 'green') selectedColorText = 'зеленый';
-      if (selectedColorText === 'blue') selectedColorText = 'синий';
-      
-      let selectedColorForSpan = move.selectedColor;
-      const colorHex = getColorHex(selectedColorForSpan);
-      
-      div.innerHTML = `${move.player} --> ${cardText} <span style="color:${colorHex};font-weight:bold;">${selectedColorText}</span>`;
-    } else {
-      const colorHex = getColorHex(colorForSpan);
-      div.innerHTML = `${move.player} --> ${cardText} <span style="color:${colorHex};font-weight:bold;">${colorText}</span>`;
-    }
-    
-    console.log('Move:', div.textContent);
-    movesContent.appendChild(div);
-  });
-}
+movesBtn.onclick = () => movesWindow.style.display = 'block';
+movesClose.onclick = () => movesWindow.style.display = 'none';
 
 function startGame() {
   waitingText.textContent = 'Игра началась!';
@@ -358,10 +318,6 @@ function initGameState(state) {
   startGame();
   updateUI();
   updateTurnIndicator();
-  
-  if (isMovesWindowOpen) {
-    updateMovesLog();
-  }
 }
 
 socket.on('gameUpdated', (state) => {
@@ -381,14 +337,10 @@ socket.on('gameUpdated', (state) => {
   player1Nick = state.player1Nick || player1Nick;
   player2Nick = state.player2Nick || player2Nick;
   
-  console.log('gameUpdated received, movesLog length:', movesLog.length);
+  console.log('gameUpdated:', 'currentPlayerIndex:', currentPlayerIndex, 'myHand:', myHand);
   
   updateUI();
   updateTurnIndicator();
-  
-  if (isMovesWindowOpen) {
-    updateMovesLog();
-  }
 });
 
 socket.on('gameStarted', (state) => {
@@ -411,17 +363,12 @@ socket.on('gameStarted', (state) => {
   startGame();
   updateUI();
   updateTurnIndicator();
-  
-  if (isMovesWindowOpen) {
-    updateMovesLog();
-  }
 });
 
 socket.on('gameEnd', (data) => {
   gameOver = true;
   winnerName.textContent = data.winner;
   winnerPopup.style.display = 'block';
-  newGamePopupBtn.style.display = 'none';
 });
 
 socket.on('playerDisconnected', (data) => {
@@ -434,41 +381,11 @@ function renderDiscardPile() {
   if (!card) {
     discardPileEl.textContent = '';
     discardPileEl.className = 'card-slot';
-    discardPileEl.style.background = '';
     return;
   }
-  
-  discardPileEl.style.background = '';
-  
-  if (card.value === 'wild') {
-    discardPileEl.innerHTML = `
-      <span class="wild-corner wild-top-left" style="color:#000;">W</span>
-      <span class="wild-corner wild-bottom-right" style="color:#000;">W</span>
-      <span class="wild-center" style="color:#fff;">W</span>
-    `;
-  } else if (card.value === 'wild4') {
-    discardPileEl.innerHTML = `
-      <span class="wild4-corner wild4-top-left" style="color:#000;">+4</span>
-      <span class="wild4-corner wild4-bottom-right" style="color:#000;">+4</span>
-      <span class="wild4-center" style="color:#fff;">+4</span>
-    `;
-  } else {
-    const corners = cardCornerValues(card);
-    discardPileEl.innerHTML = `<span style="color:#000;font-size:48px;font-weight:bold;">${corners.topLeft}</span>`;
-  }
-  
-  let className = cardClass(card);
-  discardPileEl.className = `card-slot ${className}`;
-  
-  if (card.selectedColor && (card.value === 'wild' || card.value === 'wild4')) {
-    const colorText = card.selectedColor.toUpperCase();
-    const colorName = colorText === 'YELLOW' ? '#fbc02d' : 
-                      colorText === 'RED' ? '#d32f2f' : 
-                      colorText === 'GREEN' ? '#388e3c' : '#1976d2';
-    
-    discardPileEl.style.background = `linear-gradient(to bottom, transparent 85%, ${colorName} 100%)`;
-    discardPileEl.innerHTML += `<div style="position:absolute;bottom:-25px;left:0;right:0;text-align:center;font-size:16px;font-weight:bold;color:${colorName};">${colorText}</div>`;
-  }
+  const corners = cardCornerValues(card);
+  discardPileEl.innerHTML = `<span style="color:#000;font-size:48px;font-weight:bold;">${corners.topLeft}</span>`;
+  discardPileEl.className = `card-slot ${cardClass(card)}`;
 }
 
 function renderDrawPile() {
@@ -486,38 +403,16 @@ function renderHand() {
   const startX = -((totalCards - 1) * spacing) / 2;
   myHand.forEach((card, idx) => {
     const btn = document.createElement('button');
-    
-    let colorClass = '';
-    if (card.selectedColor) {
-      colorClass = card.selectedColor;
-    }
-    
-    btn.className = `card ${cardClass(card)} ${colorClass}`;
+    btn.className = `card ${cardClass(card)}`;
     btn.style.cursor = canPlay(card) ? 'pointer' : 'not-allowed';
     btn.disabled = !canPlay(card);
     const corners = cardCornerValues(card);
     const centerText = cardCenterText(card);
-    
-    if (card.value === 'wild') {
-      btn.innerHTML = `
-        <span class="wild-corner wild-top-left" style="color:#000;">W</span>
-        <span class="wild-corner wild-bottom-right" style="color:#000;">W</span>
-        <span class="wild-center" style="color:#fff;">W</span>
-      `;
-    } else if (card.value === 'wild4') {
-      btn.innerHTML = `
-        <span class="wild4-corner wild4-top-left" style="color:#000;">+4</span>
-        <span class="wild4-corner wild4-bottom-right" style="color:#000;">+4</span>
-        <span class="wild4-center" style="color:#fff;">+4</span>
-      `;
-    } else {
-      btn.innerHTML = `
-        <span style="position:absolute;top:10px;left:10px;font-size:18px;color:#000;">${corners.topLeft}</span>
-        <span style="position:absolute;bottom:10px;right:10px;font-size:18px;color:#000;">${corners.bottomRight}</span>
-        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:bold;color:#000;">${centerText}</span>
-      `;
-    }
-    
+    btn.innerHTML = `
+      <span style="position:absolute;top:10px;left:10px;font-size:18px;color:#000;">${corners.topLeft}</span>
+      <span style="position:absolute;bottom:10px;right:10px;font-size:18px;color:#000;">${corners.bottomRight}</span>
+      <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:bold;color:#000;">${centerText}</span>
+    `;
     btn.onclick = () => playCard(idx);
     const x = startX + idx * spacing;
     const y = 50 - arcHeight * (1 - Math.abs(idx - (totalCards - 1) / 2) / ((totalCards - 1) / 2 || 1));
@@ -560,6 +455,10 @@ function canPlay(card) {
   if (gameOver) return false;
   if (nextPlayerPendingDraw > 0) return false;
   if (card.value === 'wild' || card.value === 'wild4') return true;
+  
+  console.log('canPlay:', card, 'currentColor:', currentColor, 'currentValue:', currentValue);
+  console.log('card.color === currentColor:', card.color === currentColor);
+  console.log('card.value === currentValue:', card.value === currentValue);
   
   if (card.color === currentColor) return true;
   if (card.value === currentValue) return true;
@@ -623,8 +522,6 @@ function updateUI() {
 
 function playCard(idx) {
   if (gameOver) return;
-  if (!currentPlayerTurn) return;
-  
   const card = myHand[idx];
   if (!canPlay(card)) {
     alert('Нельзя играть эту карту!');
@@ -635,9 +532,11 @@ function playCard(idx) {
     waitingForWildColor = true;
     waitingForWildCardIdx = idx;
     colorPickerSection.style.display = 'block';
+    console.log('Waiting for wild color selection');
     return;
   }
   
+  console.log('playCard:', idx, card, 'currentPlayerIndex:', currentPlayerIndex, 'myIndex:', isHost ? 0 : 1);
   socket.emit('playCard', { cardIndex: idx });
 }
 
